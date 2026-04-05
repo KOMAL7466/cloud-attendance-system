@@ -4,6 +4,7 @@ import jwt
 import datetime
 import hashlib
 import uuid
+import os
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -415,28 +416,5 @@ def create_demo_data():
     print(f"✅ Demo attendance records created")
 
 if __name__ == '__main__':
-    print("=" * 50)
-    print("🚀 Cloud Attendance System - Local Server")
-    print("=" * 50)
-    print("\n📋 Creating demo data...")
-    create_demo_data()
-    print("\n✨ Server is ready!")
-    print("\n📍 Access URLs:")
-    print("   Frontend: http://localhost:8000")
-    print("   Backend API: http://localhost:5000")
-    print("\n🔑 Test Credentials:")
-    print("   Admin: username='admin', password='admin123'")
-    print("   Student: Register a new account")
-    print("\n📡 API Endpoints:")
-    print("   POST   /auth")
-    print("   POST   /mark-attendance")
-    print("   GET    /get-attendance")
-    print("   GET    /admin-dashboard")
-    print("   POST   /add-student")
-    print("   GET    /get-students")
-    print("   POST   /generate-report")
-    print("   GET    /health")
-    print("\n" + "=" * 50)
-    print("🔥 Server running on http://localhost:5000")
-    print("=" * 50)
-    app.run(debug=True, host='localhost', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
