@@ -1,0 +1,28 @@
+{
+  "Tables": {
+    "Users": {
+      "TableName": "attendance_users",
+      "KeySchema": [{ "AttributeName": "username", "KeyType": "HASH" }],
+      "AttributeDefinitions": [{ "AttributeName": "username", "AttributeType": "S" }],
+      "BillingMode": "PAY_PER_REQUEST"
+    },
+    "Students": {
+      "TableName": "attendance_students",
+      "KeySchema": [{ "AttributeName": "student_id", "KeyType": "HASH" }],
+      "AttributeDefinitions": [{ "AttributeName": "student_id", "AttributeType": "S" }],
+      "BillingMode": "PAY_PER_REQUEST"
+    },
+    "Attendance": {
+      "TableName": "attendance_records",
+      "KeySchema": [
+        { "AttributeName": "student_id", "KeyType": "HASH" },
+        { "AttributeName": "date", "KeyType": "RANGE" }
+      ],
+      "AttributeDefinitions": [
+        { "AttributeName": "student_id", "AttributeType": "S" },
+        { "AttributeName": "date", "AttributeType": "S" }
+      ],
+      "BillingMode": "PAY_PER_REQUEST"
+    }
+  }
+}

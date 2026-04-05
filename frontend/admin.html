@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Cloud Attendance System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">📋 Admin Dashboard</div>
+        <div class="nav-user">
+            <span id="adminName"></span>
+            <button onclick="logout()" class="logout-btn">Logout</button>
+        </div>
+    </nav>
+    
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <button onclick="showAdminSection('overview')" class="sidebar-btn">📊 Overview</button>
+            <button onclick="showAdminSection('students')" class="sidebar-btn">👨‍🎓 Manage Students</button>
+            <button onclick="showAdminSection('reports')" class="sidebar-btn">📄 Generate Reports</button>
+            <button onclick="showAdminSection('settings')" class="sidebar-btn">⚙️ Settings</button>
+        </div>
+        
+        <div class="main-content">
+            <!-- Overview Section -->
+            <div id="overviewSection" class="section">
+                <h2>System Overview</h2>
+                <div class="stats-cards" id="statsCards"></div>
+                <div class="card">
+                    <h3>Daily Attendance Trend</h3>
+                    <div id="attendanceChart" class="chart-container"></div>
+                </div>
+                <div class="card">
+                    <h3>Student Attendance Percentage</h3>
+                    <div id="studentStats" class="records-table"></div>
+                </div>
+            </div>
+            
+            <!-- Manage Students Section -->
+            <div id="studentsSection" class="section" style="display: none;">
+                <h2>Manage Students</h2>
+                <div class="card">
+                    <h3>Add New Student</h3>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Student ID</label>
+                            <input type="text" id="newStudentId" placeholder="e.g., 23021541027">
+                        </div>
+                        <div class="input-group">
+                            <label>Student Name</label>
+                            <input type="text" id="newStudentName" placeholder="Full Name">
+                        </div>
+                        <div class="input-group">
+                            <label>Department</label>
+                            <input type="text" id="newStudentDept" placeholder="Department">
+                        </div>
+                        <button onclick="addStudent()" class="primary-btn">Add Student</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Student List</h3>
+                    <div id="studentList" class="records-table"></div>
+                </div>
+            </div>
+            
+            <!-- Reports Section -->
+            <div id="reportsSection" class="section" style="display: none;">
+                <h2>Generate Reports</h2>
+                <div class="card">
+                    <div class="input-group">
+                        <label>Report Type</label>
+                        <select id="reportType">
+                            <option value="daily">Daily Report</option>
+                            <option value="monthly">Monthly Report</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Date</label>
+                        <input type="date" id="reportDate">
+                    </div>
+                    <button onclick="generateReport()" class="primary-btn">Generate Report</button>
+                    <div id="reportResult" class="message"></div>
+                </div>
+            </div>
+            
+            <!-- Settings Section -->
+            <div id="settingsSection" class="section" style="display: none;">
+                <h2>System Settings</h2>
+                <div class="card">
+                    <h3>API Configuration</h3>
+                    <div class="input-group">
+                        <label>API Endpoint</label>
+                        <input type="text" id="apiEndpoint" readonly>
+                    </div>
+                    <button onclick="testConnection()" class="secondary-btn">Test Connection</button>
+                    <div id="connectionStatus"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

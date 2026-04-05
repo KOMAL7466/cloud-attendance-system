@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Cloud Attendance System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">📋 Cloud Attendance System</div>
+        <div class="nav-user">
+            <span id="userName"></span>
+            <button onclick="logout()" class="logout-btn">Logout</button>
+        </div>
+    </nav>
+    
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <button onclick="showSection('mark')" class="sidebar-btn">✏️ Mark Attendance</button>
+            <button onclick="showSection('view')" class="sidebar-btn">📊 View Attendance</button>
+            <button onclick="showSection('stats')" class="sidebar-btn">📈 Statistics</button>
+        </div>
+        
+        <div class="main-content">
+            <!-- Mark Attendance Section -->
+            <div id="markSection" class="section">
+                <h2>Mark Attendance</h2>
+                <div class="card">
+                    <div class="input-group">
+                        <label>Student ID</label>
+                        <input type="text" id="studentId" placeholder="Enter Student ID">
+                    </div>
+                    <div class="input-group">
+                        <label>Status</label>
+                        <select id="attendanceStatus">
+                            <option value="Present">Present</option>
+                            <option value="Absent">Absent</option>
+                            <option value="Late">Late</option>
+                        </select>
+                    </div>
+                    <button onclick="markAttendance()" class="primary-btn">Submit Attendance</button>
+                    <div id="markMessage" class="message"></div>
+                </div>
+            </div>
+            
+            <!-- View Attendance Section -->
+            <div id="viewSection" class="section" style="display: none;">
+                <h2>Attendance Records</h2>
+                <div class="card">
+                    <div class="input-group">
+                        <label>Student ID (Optional)</label>
+                        <input type="text" id="viewStudentId" placeholder="Leave empty for all records">
+                    </div>
+                    <button onclick="viewAttendance()" class="primary-btn">View Records</button>
+                    <div id="attendanceRecords" class="records-table"></div>
+                </div>
+            </div>
+            
+            <!-- Statistics Section -->
+            <div id="statsSection" class="section" style="display: none;">
+                <h2>Attendance Statistics</h2>
+                <div class="stats-grid" id="statsGrid"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
