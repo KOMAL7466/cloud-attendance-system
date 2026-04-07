@@ -388,7 +388,7 @@ def create_demo_data():
     
     # Create some demo students
     demo_students = [
-        {'student_id': '23021541001', 'name': 'Rahul Sharma', 'department': 'Computer Science'},
+        {'student_id': '24021541017', 'name': 'Mohit Dahiya', 'department': 'Computer Science'},
         {'student_id': '23021541002', 'name': 'Priya Patel', 'department': 'Computer Science'},
         {'student_id': '23021541003', 'name': 'Amit Kumar', 'department': 'Information Technology'},
     ]
@@ -403,18 +403,21 @@ def create_demo_data():
     yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
     
     demo_records = [
-        {'student_id': '23021541001', 'date': today, 'status': 'present', 'marked_at': datetime.datetime.now().isoformat()},
-        {'student_id': '23021541002', 'date': today, 'status': 'present', 'marked_at': datetime.datetime.now().isoformat()},
-        {'student_id': '23021541003', 'date': today, 'status': 'absent', 'marked_at': datetime.datetime.now().isoformat()},
-        {'student_id': '23021541001', 'date': yesterday, 'status': 'present', 'marked_at': (datetime.datetime.now() - datetime.timedelta(days=1)).isoformat()},
-        {'student_id': '23021541002', 'date': yesterday, 'status': 'absent', 'marked_at': (datetime.datetime.now() - datetime.timedelta(days=1)).isoformat()},
+        {'student_id': '24021541017', 'date': today, 'status': 'present', 'marked_at': datetime.datetime.now().isoformat()},
+        {'student_id': '24021541002', 'date': today, 'status': 'present', 'marked_at': datetime.datetime.now().isoformat()},
+        {'student_id': '24021541003', 'date': today, 'status': 'absent', 'marked_at': datetime.datetime.now().isoformat()},
+        {'student_id': '24021541001', 'date': yesterday, 'status': 'present', 'marked_at': (datetime.datetime.now() - datetime.timedelta(days=1)).isoformat()},
+        {'student_id': '24021541002', 'date': yesterday, 'status': 'absent', 'marked_at': (datetime.datetime.now() - datetime.timedelta(days=1)).isoformat()},
     ]
     
     for record in demo_records:
         attendance_records.append(record)
     
-    print(f"✅ Demo attendance records created")
+    print(f" Demo attendance records created")
 
 if __name__ == '__main__':
+    import sys
     port = int(os.environ.get('PORT', 5000))
-    app.run(debug=False, host='0.0.0.0', port=port)
+    print(f" Attempting to start server on port {port}", flush=True)
+    print(f" Binding to host 0.0.0.0", flush=True)
+    app.run(debug=False, host='0.0.0.0', port=port, threaded=True)
