@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = 'http://localhost:5000'; // Change for production
+const API_BASE_URL = 'https://cloud-attendance-system-ab69.onrender.com/'; // Change for production
 
 // Store user session
 let currentUser = null;
