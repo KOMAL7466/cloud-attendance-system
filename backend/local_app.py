@@ -27,7 +27,7 @@ EMAIL_CONFIG = {
     'smtp_server': 'smtp.gmail.com',
     'smtp_port': 587,
     'sender_email': 'dahiyamohit764@gmail.com',  # ✅ Changed to Mohit's email
-    'sender_password': 'your_new_app_password',  # ✅ REPLACE with Mohit's app password
+    'sender_password': 'lmpa vzky dxmn gphs',  # ✅ REPLACE with Mohit's app password
     'admin_email': 'dahiyamohit764@gmail.com'     # ✅ Admin email (same)
 }
 
