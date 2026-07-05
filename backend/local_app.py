@@ -26,8 +26,8 @@ CORS(app, resources={
 EMAIL_CONFIG = {
     'smtp_server': 'smtp.gmail.com',
     'smtp_port': 587,
-    'sender_email': 'varshadahiya708@gmail.com ',
-    'sender_password': 'qzvn hdio cpto qmcn',  # Change this
+    'sender_email': 'varshadahiya708@gmail.com',
+    'sender_password': 'vowh aegj ohec mptm',  # Change this
     'admin_email': 'dahiyamohit764@gmail.com'
 }
 
