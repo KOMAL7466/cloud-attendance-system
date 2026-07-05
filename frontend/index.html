@@ -8,60 +8,81 @@
 </head>
 <body>
     <div class="container">
-        <div class="login-card">
-            <div class="logo">
-                <h1>📋 Cloud Attendance System</h1>
-                <p>Powered by AWS</p>
+        
+        <!-- Login Card -->
+        <div class="auth-card login-card" id="loginCard">
+            <div class="auth-header">
+                <div class="logo-icon">📋</div>
+                <h1>Cloud Attendance System</h1>
+                <p>Smart Attendance Management</p>
             </div>
-            
-            <form id="loginForm">
-                <div class="input-group">
-                    <label>Username</label>
-                    <input type="text" id="username" required>
+            <div class="auth-body">
+                <div id="loginError" class="alert alert-error" style="display: none;"></div>
+                <form id="loginForm">
+                    <div class="input-group">
+                        <label>Username</label>
+                        <div class="input-icon">
+                            <span class="icon">👤</span>
+                            <input type="text" id="username" placeholder="Enter your username" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <div class="input-icon">
+                            <span class="icon">🔒</span>
+                            <input type="password" id="password" placeholder="Enter your password" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword()">👁️</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary btn-full">🔑 Login</button>
+                </form>
+                <div class="auth-divider"><span>or</span></div>
+                <div class="auth-footer">
+                    <p>Don't have an account? <a href="#" onclick="showRegister()">Register here</a></p>
                 </div>
-                <div class="input-group">
-                    <label>Password</label>
-                    <input type="password" id="password" required>
-                </div>
-                <button type="submit">Login</button>
-            </form>
-            
-            <div class="register-link">
-                <a href="#" onclick="showRegister()">New user? Register here</a>
             </div>
         </div>
         
-        <div class="register-card" style="display: none;">
-            <div class="logo">
-                <h1>📋 Register</h1>
+        <!-- Register Card -->
+        <div class="auth-card register-card" id="registerCard" style="display: none;">
+            <div class="auth-header">
+                <div class="logo-icon">📝</div>
+                <h1>Create Account</h1>
+                <p>Join the Cloud Attendance System</p>
             </div>
-            <form id="registerForm">
-                <div class="input-group">
-                    <label>Full Name</label>
-                    <input type="text" id="regName" required>
+            <div class="auth-body">
+                <div id="registerError" class="alert alert-error" style="display: none;"></div>
+                <div id="registerSuccess" class="alert alert-success" style="display: none;"></div>
+                <form id="registerForm">
+                    <div class="input-group"><label>Full Name *</label><div class="input-icon"><span class="icon">👤</span><input type="text" id="regName" placeholder="Enter your full name" required></div></div>
+                    <div class="input-group"><label>Email Address *</label><div class="input-icon"><span class="icon">📧</span><input type="email" id="regEmail" placeholder="Enter your email" required></div></div>
+                    <div class="input-group"><label>Username / Student ID *</label><div class="input-icon"><span class="icon">🆔</span><input type="text" id="regUsername" placeholder="Choose a username" required></div></div>
+                    <div class="input-group"><label>Password *</label><div class="input-icon"><span class="icon">🔒</span><input type="password" id="regPassword" placeholder="Create a strong password" required><button type="button" class="toggle-password" onclick="toggleRegisterPassword()">👁️</button></div></div>
+                    <div class="input-group"><label>Role *</label><div class="input-icon"><span class="icon">🎯</span><select id="regRole" required><option value="">Select your role</option><option value="student">🎓 Student</option><option value="admin">🔑 Admin</option></select></div></div>
+                    
+                    <div id="studentFields" style="display: none;">
+                        <div class="input-group"><label>Department</label><select id="regDepartment"><option value="Science">Science</option><option value="Arts">Arts</option><option value="Commerce">Commerce</option><option value="Engineering">Engineering</option><option value="Medical">Medical</option><option value="Other">Other</option></select></div>
+                        <div class="input-group"><label>Branch</label><input type="text" id="regBranch" placeholder="e.g., Computer Science"></div>
+                        <div class="input-group"><label>Batch/Year</label><select id="regBatch"><option value="1st Year">1st Year</option><option value="2nd Year">2nd Year</option><option value="3rd Year">3rd Year</option><option value="4th Year">4th Year</option><option value="Final Year">Final Year</option></select></div>
+                        <div class="input-group"><label>Admission Year</label><input type="number" id="regAdmissionYear" placeholder="2024" value="2024"></div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary btn-full">📝 Register</button>
+                </form>
+                <div class="auth-divider"><span>or</span></div>
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="#" onclick="showLogin()">Login here</a></p>
                 </div>
-                <div class="input-group">
-                    <label>Username</label>
-                    <input type="text" id="regUsername" required>
-                </div>
-                <div class="input-group">
-                    <label>Password</label>
-                    <input type="password" id="regPassword" required>
-                </div>
-                <div class="input-group">
-                    <label>Role</label>
-                    <select id="regRole">
-                        <option value="student">Student</option>
-                        <option value="faculty">Faculty</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                </div>
-                <button type="submit">Register</button>
-                <button type="button" onclick="showLogin()">Back to Login</button>
-            </form>
+            </div>
         </div>
+        
+        <!-- Demo Credentials -->
+        <div class="demo-credentials">
+            <p><strong>🔑 Demo Credentials:</strong></p>
+            <p>Admin: <code>admin</code> / <code>admin123</code></p>
+        </div>
+        
     </div>
-    
     <script src="script.js"></script>
 </body>
 </html>

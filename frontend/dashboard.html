@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Cloud Attendance System</title>
+    <title>Student Dashboard - Cloud Attendance System</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,57 +11,108 @@
         <div class="nav-brand">📋 Cloud Attendance System</div>
         <div class="nav-user">
             <span id="userName"></span>
+            <span id="userRole" class="user-role"></span>
             <button onclick="logout()" class="logout-btn">Logout</button>
         </div>
     </nav>
     
     <div class="dashboard-container">
         <div class="sidebar">
+            <button onclick="showSection('profile')" class="sidebar-btn active">👤 My Profile</button>
             <button onclick="showSection('mark')" class="sidebar-btn">✏️ Mark Attendance</button>
+            <button onclick="showSection('leave')" class="sidebar-btn">📝 Apply Leave</button>
             <button onclick="showSection('view')" class="sidebar-btn">📊 View Attendance</button>
             <button onclick="showSection('stats')" class="sidebar-btn">📈 Statistics</button>
         </div>
         
         <div class="main-content">
-            <!-- Mark Attendance Section -->
-            <div id="markSection" class="section">
-                <h2>Mark Attendance</h2>
+            
+            <!-- Profile -->
+            <div id="profileSection" class="section">
+                <h2>👤 My Profile</h2>
                 <div class="card">
-                    <div class="input-group">
-                        <label>Student ID</label>
-                        <input type="text" id="studentId" placeholder="Enter Student ID">
+                    <div class="profile-grid" id="studentProfile">
+                        <div class="profile-item"><label>Student ID</label><span id="profileStudentId">-</span></div>
+                        <div class="profile-item"><label>Full Name</label><span id="profileName">-</span></div>
+                        <div class="profile-item"><label>Email</label><span id="profileEmail">-</span></div>
+                        <div class="profile-item"><label>Department</label><span id="profileDepartment">-</span></div>
+                        <div class="profile-item"><label>Branch</label><span id="profileBranch">-</span></div>
+                        <div class="profile-item"><label>Batch/Year</label><span id="profileBatch">-</span></div>
+                        <div class="profile-item"><label>Admission Year</label><span id="profileAdmissionYear">-</span></div>
+                        <div class="profile-item"><label>Total Present</label><span id="profileTotalPresent">-</span></div>
+                        <div class="profile-item"><label>Total Absent</label><span id="profileTotalAbsent">-</span></div>
+                        <div class="profile-item"><label>Total Leave</label><span id="profileTotalLeave">-</span></div>
+                        <div class="profile-item" style="grid-column: span 2;"><label>Attendance Percentage</label><span id="profilePercentage" style="font-size: 24px; font-weight: bold; color: #667eea;">-</span></div>
                     </div>
-                    <div class="input-group">
-                        <label>Status</label>
-                        <select id="attendanceStatus">
-                            <option value="Present">Present</option>
-                            <option value="Absent">Absent</option>
-                            <option value="Late">Late</option>
-                        </select>
-                    </div>
-                    <button onclick="markAttendance()" class="primary-btn">Submit Attendance</button>
-                    <div id="markMessage" class="message"></div>
                 </div>
             </div>
             
-            <!-- View Attendance Section -->
+            <!-- Mark Attendance -->
+            <div id="markSection" class="section" style="display: none;">
+                <h2>✏️ Mark Attendance</h2>
+                <div class="card">
+                    <h3>📌 Today's Attendance</h3>
+                    <div class="attendance-options">
+                        <button onclick="markAttendance('present')" class="attendance-btn present-btn">✅ Present</button>
+                        <button onclick="markAttendance('leave')" class="attendance-btn leave-btn">📝 Leave</button>
+                    </div>
+                    <div style="margin-top: 15px; padding: 10px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #d69e2e;">
+                        <p style="margin: 0; color: #744210;">⏰ <strong>Note:</strong> If you don't mark attendance, it will be automatically marked as <strong>ABSENT</strong></p>
+                    </div>
+                    <div id="markMessage" class="message" style="margin-top: 15px;"></div>
+                </div>
+                <div class="card">
+                    <h3>📊 Today's Status</h3>
+                    <div id="todayStatus" class="today-status"><p>Loading today's status...</p></div>
+                </div>
+            </div>
+            
+            <!-- Apply Leave -->
+            <div id="leaveSection" class="section" style="display: none;">
+                <h2>📝 Apply for Leave</h2>
+                <div class="card">
+                    <h3>📋 Leave Application Form</h3>
+                    <div class="form-grid">
+                        <div class="input-group" style="grid-column: span 2;"><label>Subject *</label><input type="text" id="leaveSubject" placeholder="Enter leave subject"></div>
+                        <div class="input-group" style="grid-column: span 2;"><label>Message *</label><textarea id="leaveMessage" rows="4" placeholder="Explain your reason for leave..."></textarea></div>
+                        <div class="input-group"><label>Date</label><input type="date" id="leaveDate"></div>
+                        <div class="input-group" style="display: flex; align-items: flex-end;"><button onclick="applyLeave()" class="primary-btn" style="width: 100%;">📤 Submit Leave</button></div>
+                    </div>
+                    <div id="leaveMessageResult" class="message" style="margin-top: 15px;"></div>
+                </div>
+                <div class="card">
+                    <h3>📋 My Leave History</h3>
+                    <div id="leaveHistory" class="records-table"><p>No leave applications found.</p></div>
+                </div>
+            </div>
+            
+            <!-- View Attendance -->
             <div id="viewSection" class="section" style="display: none;">
-                <h2>Attendance Records</h2>
+                <h2>📊 My Attendance Records</h2>
                 <div class="card">
-                    <div class="input-group">
-                        <label>Student ID (Optional)</label>
-                        <input type="text" id="viewStudentId" placeholder="Leave empty for all records">
+                    <h3>🔍 Filter Records</h3>
+                    <div class="filter-bar">
+                        <div class="input-group"><label>Start Date</label><input type="date" id="viewStartDate"></div>
+                        <div class="input-group"><label>End Date</label><input type="date" id="viewEndDate"></div>
+                        <div class="input-group"><label>Status</label><select id="viewStatus"><option value="">All</option><option value="present">Present</option><option value="absent">Absent</option><option value="leave">Leave</option></select></div>
+                        <div class="input-group" style="display: flex; align-items: flex-end;"><button onclick="viewAttendance()" class="primary-btn" style="width: 100%;">🔍 View Records</button></div>
                     </div>
-                    <button onclick="viewAttendance()" class="primary-btn">View Records</button>
-                    <div id="attendanceRecords" class="records-table"></div>
+                </div>
+                <div class="card"><h3>📋 Attendance Records</h3><div id="attendanceRecords" class="records-table"></div></div>
+            </div>
+            
+            <!-- Statistics -->
+            <div id="statsSection" class="section" style="display: none;">
+                <h2>📈 My Attendance Statistics</h2>
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card"><h3 id="statTotalDays">0</h3><p>Total Days</p></div>
+                    <div class="stat-card" style="border-left: 4px solid #38a169;"><h3 id="statPresent" style="color: #38a169;">0</h3><p>Present</p></div>
+                    <div class="stat-card" style="border-left: 4px solid #e53e3e;"><h3 id="statAbsent" style="color: #e53e3e;">0</h3><p>Absent</p></div>
+                    <div class="stat-card" style="border-left: 4px solid #dd6b20;"><h3 id="statLeave" style="color: #dd6b20;">0</h3><p>Leave</p></div>
+                    <div class="stat-card" style="grid-column: span 2; border-left: 4px solid #667eea;"><h3 id="statPercentage" style="color: #667eea; font-size: 36px;">0%</h3><p>Attendance Percentage</p></div>
                 </div>
             </div>
             
-            <!-- Statistics Section -->
-            <div id="statsSection" class="section" style="display: none;">
-                <h2>Attendance Statistics</h2>
-                <div class="stats-grid" id="statsGrid"></div>
-            </div>
         </div>
     </div>
     

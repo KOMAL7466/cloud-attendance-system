@@ -3,50 +3,50 @@ from flask_cors import CORS
 import jwt
 import datetime
 import hashlib
-import uuid
 import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders
-import csv
-from io import StringIO, BytesIO
+import random
+import string
 
 app = Flask(__name__)
-CORS(app)
 
-SECRET_KEY = "your-secret-key-here-please-change-in-production"
+# ==================== ✅ FIXED CORS CONFIGURATION ====================
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "expose_headers": ["Content-Type", "Authorization"]
+    }
+})
 
+# ==================== EMAIL CONFIGURATION ====================
 EMAIL_CONFIG = {
     'smtp_server': 'smtp.gmail.com',
     'smtp_port': 587,
-    'sender_email': 'dahiyamohit764@gmail.com',  # 🔴 CHANGE THIS - Email jo bhejega
-    'sender_password': 'oard jtbc avyj rdjd', # 🔴 CHANGE THIS - Gmail App Password
-    'admin_email': 'varshadahiya708 @gmail.com'        # ✅ This is correct - Admin email
+    'sender_email': 'varshadahiya708@gmail.com',
+    'sender_password': 'xypu anfg fesw bwsj',  # Change this
+    'admin_email': 'dahiyamohit764@gmail.com'
 }
 
 # In-memory storage
 users = {}
 students = {}
 attendance_records = []
+leave_applications = []
+
+SECRET_KEY = "your-secret-key-here"
 
 # ==================== EMAIL FUNCTION ====================
-def send_email(to_email, subject, body, attachment=None):
+def send_email(to_email, subject, body):
     try:
         msg = MIMEMultipart()
         msg['From'] = EMAIL_CONFIG['sender_email']
         msg['To'] = to_email
         msg['Subject'] = subject
-        
         msg.attach(MIMEText(body, 'html'))
-        
-        if attachment:
-            part = MIMEBase('application', 'octet-stream')
-            part.set_payload(attachment)
-            encoders.encode_base64(part)
-            part.add_header('Content-Disposition', f'attachment; filename=attendance_report.pdf')
-            msg.attach(part)
         
         server = smtplib.SMTP(EMAIL_CONFIG['smtp_server'], EMAIL_CONFIG['smtp_port'])
         server.starttls()
@@ -65,8 +65,10 @@ def health_check():
     return jsonify({'status': 'healthy', 'timestamp': datetime.datetime.now().isoformat()})
 
 # ==================== AUTH ENDPOINT ====================
-@app.route('/auth', methods=['POST'])
+@app.route('/auth', methods=['POST', 'OPTIONS'])
 def auth():
+    if request.method == 'OPTIONS':
+        return '', 200
     try:
         data = request.json
         action = data.get('action')
@@ -92,7 +94,8 @@ def auth():
                     'success': True,
                     'token': token,
                     'name': user['name'],
-                    'role': user['role']
+                    'role': user['role'],
+                    'username': username
                 })
             else:
                 return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
@@ -102,6 +105,11 @@ def auth():
             password = data.get('password')
             name = data.get('name')
             role = data.get('role', 'student')
+            email = data.get('email', '')
+            department = data.get('department', 'Other')
+            branch = data.get('branch', 'General')
+            batch = data.get('batch', '1st Year')
+            admission_year = data.get('admission_year', str(datetime.datetime.now().year))
             
             if username in users:
                 return jsonify({'success': False, 'error': 'Username already exists'}), 400
@@ -111,8 +119,21 @@ def auth():
                 'password': hashlib.md5(password.encode()).hexdigest(),
                 'name': name,
                 'role': role,
+                'email': email,
                 'created_at': datetime.datetime.now().isoformat()
             }
+            
+            if role == 'student':
+                students[username] = {
+                    'student_id': username,
+                    'name': name,
+                    'email': email,
+                    'department': department,
+                    'branch': branch,
+                    'batch': batch,
+                    'admission_year': admission_year,
+                    'created_at': datetime.datetime.now().isoformat()
+                }
             
             return jsonify({'success': True, 'message': 'User registered successfully'})
         
@@ -122,39 +143,124 @@ def auth():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ==================== MARK ATTENDANCE (FIXED) ====================
-@app.route('/mark-attendance', methods=['POST'])
-def mark_attendance():
+# ==================== GENERATE STUDENT CREDENTIALS ====================
+@app.route('/generate-student-credentials', methods=['POST', 'OPTIONS'])
+def generate_student_credentials():
+    if request.method == 'OPTIONS':
+        return '', 200
     try:
-        # Verify token
         auth_header = request.headers.get('Authorization', '')
         token = auth_header.replace('Bearer ', '')
         
         if not token:
             return jsonify({'success': False, 'error': 'No token provided'}), 401
         
-        try:
-            user_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-        except jwt.InvalidTokenError:
-            return jsonify({'success': False, 'error': 'Invalid token'}), 401
+        user_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        username = user_data['username']
+        
+        if username not in users or users[username]['role'] != 'admin':
+            return jsonify({'success': False, 'error': 'Admin access required'}), 403
         
         data = request.json
         student_id = data.get('student_id')
-        date = data.get('date')
-        status = data.get('status', 'present')
+        name = data.get('name')
+        email = data.get('email')
+        department = data.get('department', 'Other')
+        branch = data.get('branch', 'General')
+        batch = data.get('batch', '1st Year')
+        admission_year = data.get('admission_year', str(datetime.datetime.now().year))
+        
+        if not student_id or not email or not name:
+            return jsonify({'success': False, 'error': 'student_id, name and email required'}), 400
+        
+        temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+        
+        if student_id in users:
+            users[student_id]['password'] = hashlib.md5(temp_password.encode()).hexdigest()
+            users[student_id]['name'] = name
+            users[student_id]['email'] = email
+            message = f'Credentials updated for {student_id}'
+        else:
+            users[student_id] = {
+                'username': student_id,
+                'password': hashlib.md5(temp_password.encode()).hexdigest(),
+                'name': name,
+                'role': 'student',
+                'email': email,
+                'created_at': datetime.datetime.now().isoformat()
+            }
+            message = f'Student {name} created'
+        
+        students[student_id] = {
+            'student_id': student_id,
+            'name': name,
+            'email': email,
+            'department': department,
+            'branch': branch,
+            'batch': batch,
+            'admission_year': admission_year,
+            'created_at': datetime.datetime.now().isoformat()
+        }
+        
+        email_body = f"""
+        <html>
+        <body>
+        <h2 style="color: #667eea;">🎓 Welcome to Cloud Attendance System</h2>
+        <p><strong>Student ID:</strong> {student_id}</p>
+        <p><strong>Password:</strong> <span style="background: #f0f0f0; padding: 5px;">{temp_password}</span></p>
+        <p><strong>Login URL:</strong> <a href="https://cloud-attendance-system.vercel.app">Click Here</a></p>
+        <hr>
+        <p><small>Cloud Attendance System</small></p>
+        </body>
+        </html>
+        """
+        send_email(email, '🎓 Your Attendance System Credentials', email_body)
+        
+        return jsonify({
+            'success': True,
+            'message': f'{message} and credentials sent to {email}',
+            'student': {'student_id': student_id, 'name': name, 'email': email}
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ==================== MARK ATTENDANCE ====================
+@app.route('/mark-attendance', methods=['POST', 'OPTIONS'])
+def mark_attendance():
+    if request.method == 'OPTIONS':
+        return '', 200
+    try:
+        auth_header = request.headers.get('Authorization', '')
+        token = auth_header.replace('Bearer ', '')
+        
+        if not token:
+            return jsonify({'success': False, 'error': 'No token provided'}), 401
+        
+        user_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        
+        data = request.json
+        student_id = data.get('student_id')
+        date = data.get('date', datetime.datetime.now().strftime('%Y-%m-%d'))
+        status = data.get('status', 'absent').lower()
+        leave_subject = data.get('leave_subject', '')
+        leave_message = data.get('leave_message', '')
+        marked_by = data.get('marked_by', user_data['username'])
         
         if not student_id:
             return jsonify({'success': False, 'error': 'student_id required'}), 400
         
-        # Check if student exists
         if student_id not in students:
-            students[student_id] = {
-                'student_id': student_id,
-                'name': f'Student_{student_id}',
-                'department': 'General'
-            }
+            return jsonify({'success': False, 'error': 'Student not found'}), 404
         
-        # Check if attendance already marked
+        student = students[student_id]
+        student_name = student.get('name', student_id)
+        student_email = student.get('email', '')
+        day_of_week = datetime.datetime.now().strftime('%A')
+        
+        if status not in ['present', 'leave']:
+            status = 'absent'
+        
         existing_index = -1
         for i, record in enumerate(attendance_records):
             if record['student_id'] == student_id and record['date'] == date:
@@ -163,46 +269,85 @@ def mark_attendance():
         
         attendance_entry = {
             'student_id': student_id,
+            'student_name': student_name,
+            'student_department': student.get('department', 'N/A'),
+            'student_branch': student.get('branch', 'N/A'),
+            'student_batch': student.get('batch', 'N/A'),
             'date': date,
             'status': status,
             'marked_at': datetime.datetime.now().isoformat(),
-            'marked_by': user_data['username']
+            'marked_by': marked_by,
+            'day': day_of_week
         }
         
         if existing_index >= 0:
             attendance_records[existing_index] = attendance_entry
-            message = f'Attendance updated to {status} for {student_id} on {date}'
+            message = f'Attendance updated to {status}'
         else:
             attendance_records.append(attendance_entry)
-            message = f'Attendance marked as {status} for {student_id} on {date}'
+            message = f'Attendance marked as {status}'
         
-        # ========== SEND EMAIL TO ADMIN (FIXED - Inside try block) ==========
-        if status.lower() == 'present':
-            student_name = students.get(student_id, {}).get('name', student_id)
-            email_body = f"""
-            <html>
-            <body>
-            <h2 style="color: #667eea;">📋 Attendance Notification</h2>
-            <p><strong>Student:</strong> {student_name} ({student_id})</p>
-            <p><strong>Date:</strong> {date}</p>
-            <p><strong>Status:</strong> <span style="color: green;">{status.upper()}</span></p>
-            <p><strong>Marked By:</strong> {user_data['username']}</p>
-            <p><strong>Time:</strong> {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
-            <hr>
-            <p><small>Cloud Attendance System</small></p>
-            </body>
-            </html>
+        leave_applied = False
+        if status == 'leave' and leave_subject:
+            leave_applications.append({
+                'student_id': student_id,
+                'student_name': student_name,
+                'student_email': student_email,
+                'department': student.get('department', 'N/A'),
+                'batch': student.get('batch', 'N/A'),
+                'date': date,
+                'subject': leave_subject,
+                'message': leave_message,
+                'status': 'pending',
+                'applied_at': datetime.datetime.now().isoformat()
+            })
+            leave_applied = True
+        
+        # Send email to ADMIN
+        email_body = f"""
+        <html>
+        <body>
+        <h2 style="color: #667eea;">📋 Attendance Update</h2>
+        <p><strong>Student:</strong> {student_name} ({student_id})</p>
+        <p><strong>Department:</strong> {student.get('department', 'N/A')}</p>
+        <p><strong>Branch:</strong> {student.get('branch', 'N/A')}</p>
+        <p><strong>Batch:</strong> {student.get('batch', 'N/A')}</p>
+        <p><strong>Date:</strong> {date}</p>
+        <p><strong>Day:</strong> {day_of_week}</p>
+        <p><strong>Status:</strong> <span style="color: {'green' if status == 'present' else 'orange' if status == 'leave' else 'red'};">{status.upper()}</span></p>
+        <p><strong>Marked By:</strong> {marked_by}</p>
+        <p><strong>Time:</strong> {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+        """
+        if leave_applied:
+            email_body += f"""
+        <h3>📝 Leave Application</h3>
+        <p><strong>Subject:</strong> {leave_subject}</p>
+        <p><strong>Message:</strong> {leave_message}</p>
+        <p><strong>Status:</strong> ⏳ Pending</p>
             """
-            send_email(EMAIL_CONFIG['admin_email'], f'✅ Attendance Marked - {student_name}', email_body)
+        email_body += """
+        <hr>
+        <p><small>Cloud Attendance System</small></p>
+        </body>
+        </html>
+        """
+        send_email(EMAIL_CONFIG['admin_email'], f'📋 Attendance Update - {student_name}', email_body)
         
-        return jsonify({'success': True, 'message': message})
+        return jsonify({
+            'success': True,
+            'message': message,
+            'attendance': attendance_entry,
+            'leave_applied': leave_applied
+        })
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ==================== GET ATTENDANCE ====================
-@app.route('/get-attendance', methods=['GET'])
+@app.route('/get-attendance', methods=['GET', 'OPTIONS'])
 def get_attendance():
+    if request.method == 'OPTIONS':
+        return '', 200
     try:
         auth_header = request.headers.get('Authorization', '')
         token = auth_header.replace('Bearer ', '')
@@ -210,26 +355,40 @@ def get_attendance():
         if not token:
             return jsonify({'success': False, 'error': 'No token provided'}), 401
         
-        try:
-            user_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-        except jwt.InvalidTokenError:
-            return jsonify({'success': False, 'error': 'Invalid token'}), 401
+        user_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
         
         student_id = request.args.get('student_id')
+        department = request.args.get('department')
+        branch = request.args.get('branch')
+        batch = request.args.get('batch')
+        status_filter = request.args.get('status')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
         
         filtered_records = attendance_records.copy()
         
         if student_id:
             filtered_records = [r for r in filtered_records if r['student_id'] == student_id]
-        
-        for record in filtered_records:
-            student = students.get(record['student_id'], {})
-            record['student_name'] = student.get('name', 'Unknown')
+        if department:
+            student_ids = [sid for sid, s in students.items() if s.get('department') == department]
+            filtered_records = [r for r in filtered_records if r['student_id'] in student_ids]
+        if branch:
+            student_ids = [sid for sid, s in students.items() if s.get('branch') == branch]
+            filtered_records = [r for r in filtered_records if r['student_id'] in student_ids]
+        if batch:
+            student_ids = [sid for sid, s in students.items() if s.get('batch') == batch]
+            filtered_records = [r for r in filtered_records if r['student_id'] in student_ids]
+        if status_filter:
+            filtered_records = [r for r in filtered_records if r['status'].lower() == status_filter.lower()]
+        if start_date:
+            filtered_records = [r for r in filtered_records if r['date'] >= start_date]
+        if end_date:
+            filtered_records = [r for r in filtered_records if r['date'] <= end_date]
         
         total_days = len(filtered_records)
         present_days = len([r for r in filtered_records if r['status'].lower() == 'present'])
         absent_days = len([r for r in filtered_records if r['status'].lower() == 'absent'])
-        
+        leave_days = len([r for r in filtered_records if r['status'].lower() == 'leave'])
         attendance_percentage = round((present_days / total_days * 100), 2) if total_days > 0 else 0
         
         return jsonify({
@@ -239,6 +398,7 @@ def get_attendance():
                 'total_days': total_days,
                 'present_days': present_days,
                 'absent_days': absent_days,
+                'leave_days': leave_days,
                 'attendance_percentage': attendance_percentage
             }
         })
@@ -247,8 +407,10 @@ def get_attendance():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ==================== ADMIN DASHBOARD ====================
-@app.route('/admin-dashboard', methods=['GET'])
+@app.route('/admin-dashboard', methods=['GET', 'OPTIONS'])
 def admin_dashboard():
+    if request.method == 'OPTIONS':
+        return '', 200
     try:
         auth_header = request.headers.get('Authorization', '')
         token = auth_header.replace('Bearer ', '')
@@ -256,55 +418,30 @@ def admin_dashboard():
         if not token:
             return jsonify({'success': False, 'error': 'No token provided'}), 401
         
-        try:
-            user_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-        except jwt.InvalidTokenError:
-            return jsonify({'success': False, 'error': 'Invalid token'}), 401
-        
+        user_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
         username = user_data['username']
+        
         if username not in users or users[username]['role'] != 'admin':
             return jsonify({'success': False, 'error': 'Admin access required'}), 403
         
-        daily_attendance = {}
-        for record in attendance_records:
-            date = record['date']
-            if date not in daily_attendance:
-                daily_attendance[date] = {'present': 0, 'absent': 0, 'total': 0}
-            
-            if record['status'].lower() == 'present':
-                daily_attendance[date]['present'] += 1
-            else:
-                daily_attendance[date]['absent'] += 1
-            daily_attendance[date]['total'] += 1
-        
-        student_attendance = {}
-        for record in attendance_records:
-            sid = record['student_id']
-            if sid not in student_attendance:
-                student_attendance[sid] = {'present': 0, 'total': 0}
-            
-            if record['status'].lower() == 'present':
-                student_attendance[sid]['present'] += 1
-            student_attendance[sid]['total'] += 1
-        
-        student_list = []
-        for sid, data in student_attendance.items():
-            student = students.get(sid, {'name': 'Unknown'})
-            percentage = (data['present'] / data['total'] * 100) if data['total'] > 0 else 0
-            student_list.append({
-                'student_id': sid,
-                'name': student.get('name', 'Unknown'),
-                'present': data['present'],
-                'total': data['total'],
-                'percentage': round(percentage, 2)
-            })
+        total_users = len(users)
+        total_students = len(students)
+        total_present = len([r for r in attendance_records if r['status'].lower() == 'present'])
+        total_leave = len([r for r in attendance_records if r['status'].lower() == 'leave'])
+        total_absent = len([r for r in attendance_records if r['status'].lower() == 'absent'])
         
         return jsonify({
             'success': True,
-            'total_students': len(students),
-            'total_users': len(users),
-            'daily_attendance': daily_attendance,
-            'student_attendance': student_list,
+            'overall_stats': {
+                'total_users': total_users,
+                'total_students': total_students,
+                'total_present': total_present,
+                'total_leave': total_leave,
+                'total_absent': total_absent,
+                'overall_attendance_percentage': round((total_present / (total_present + total_absent + total_leave) * 100), 2) if (total_present + total_absent + total_leave) > 0 else 0
+            },
+            'student_attendance': list(students.values()),
+            'leave_applications': leave_applications,
             'last_updated': datetime.datetime.now().isoformat()
         })
         
@@ -312,8 +449,10 @@ def admin_dashboard():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ==================== ADD STUDENT ====================
-@app.route('/add-student', methods=['POST'])
+@app.route('/add-student', methods=['POST', 'OPTIONS'])
 def add_student():
+    if request.method == 'OPTIONS':
+        return '', 200
     try:
         auth_header = request.headers.get('Authorization', '')
         token = auth_header.replace('Bearer ', '')
@@ -321,19 +460,19 @@ def add_student():
         if not token:
             return jsonify({'success': False, 'error': 'No token provided'}), 401
         
-        try:
-            user_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-        except jwt.InvalidTokenError:
-            return jsonify({'success': False, 'error': 'Invalid token'}), 401
-        
+        user_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
         username = user_data['username']
+        
         if username not in users or users[username]['role'] != 'admin':
             return jsonify({'success': False, 'error': 'Admin access required'}), 403
         
         data = request.json
         student_id = data.get('student_id')
         name = data.get('name')
-        department = data.get('department', 'General')
+        department = data.get('department', 'Other')
+        branch = data.get('branch', 'General')
+        batch = data.get('batch', '1st Year')
+        admission_year = data.get('admission_year', str(datetime.datetime.now().year))
         
         if not student_id or not name:
             return jsonify({'success': False, 'error': 'student_id and name required'}), 400
@@ -342,20 +481,22 @@ def add_student():
             'student_id': student_id,
             'name': name,
             'department': department,
+            'branch': branch,
+            'batch': batch,
+            'admission_year': admission_year,
             'created_at': datetime.datetime.now().isoformat()
         }
         
-        return jsonify({
-            'success': True,
-            'message': f'Student {name} added successfully'
-        })
+        return jsonify({'success': True, 'message': f'Student {name} added successfully'})
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ==================== GET STUDENTS ====================
-@app.route('/get-students', methods=['GET'])
+@app.route('/get-students', methods=['GET', 'OPTIONS'])
 def get_students():
+    if request.method == 'OPTIONS':
+        return '', 200
     try:
         auth_header = request.headers.get('Authorization', '')
         token = auth_header.replace('Bearer ', '')
@@ -363,24 +504,20 @@ def get_students():
         if not token:
             return jsonify({'success': False, 'error': 'No token provided'}), 401
         
-        try:
-            jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-        except jwt.InvalidTokenError:
-            return jsonify({'success': False, 'error': 'Invalid token'}), 401
+        jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
         
         student_list = list(students.values())
         
-        return jsonify({
-            'success': True,
-            'students': student_list
-        })
+        return jsonify({'success': True, 'students': student_list})
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ==================== GENERATE REPORT ====================
-@app.route('/generate-report', methods=['POST'])
+@app.route('/generate-report', methods=['POST', 'OPTIONS'])
 def generate_report():
+    if request.method == 'OPTIONS':
+        return '', 200
     try:
         auth_header = request.headers.get('Authorization', '')
         token = auth_header.replace('Bearer ', '')
@@ -388,37 +525,72 @@ def generate_report():
         if not token:
             return jsonify({'success': False, 'error': 'No token provided'}), 401
         
-        try:
-            user_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-        except jwt.InvalidTokenError:
-            return jsonify({'success': False, 'error': 'Invalid token'}), 401
+        user_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
         
         data = request.json
         report_type = data.get('type', 'daily')
         date = data.get('date')
+        department_filter = data.get('department')
+        batch_filter = data.get('batch')
         
         filtered_records = attendance_records.copy()
-        if date:
+        
+        if report_type == 'daily' and date:
             filtered_records = [r for r in filtered_records if r['date'] == date]
+        elif report_type == 'monthly' and date:
+            month = date[:7]
+            filtered_records = [r for r in filtered_records if r['date'].startswith(month)]
+        
+        if department_filter:
+            student_ids = [sid for sid, s in students.items() if s.get('department') == department_filter]
+            filtered_records = [r for r in filtered_records if r['student_id'] in student_ids]
+        
+        if batch_filter:
+            student_ids = [sid for sid, s in students.items() if s.get('batch') == batch_filter]
+            filtered_records = [r for r in filtered_records if r['student_id'] in student_ids]
         
         for record in filtered_records:
             student = students.get(record['student_id'], {})
             record['student_name'] = student.get('name', 'Unknown')
         
+        import csv
+        from io import StringIO
+        
+        output = StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['Student ID', 'Student Name', 'Department', 'Branch', 'Batch', 'Date', 'Status', 'Marked At', 'Marked By'])
+        
+        for record in filtered_records:
+            writer.writerow([
+                record['student_id'],
+                record.get('student_name', 'Unknown'),
+                record.get('student_department', 'N/A'),
+                record.get('student_branch', 'N/A'),
+                record.get('student_batch', 'N/A'),
+                record['date'],
+                record['status'],
+                record.get('marked_at', ''),
+                record.get('marked_by', '')
+            ])
+        
+        csv_data = output.getvalue()
+        filename = f"attendance_report_{report_type}_{date}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
+        
         return jsonify({
             'success': True,
-            'report_url': '#',
-            'filename': f'report_{report_type}_{date}.csv',
-            'record_count': len(filtered_records),
-            'data': filtered_records
+            'csv_data': csv_data,
+            'filename': filename,
+            'record_count': len(filtered_records)
         })
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ==================== GENERATE MONTHLY REPORT (NEW) ====================
-@app.route('/generate-monthly-report', methods=['POST'])
-def generate_monthly_report():
+# ==================== DELETE STUDENT ====================
+@app.route('/delete-student', methods=['DELETE', 'OPTIONS'])
+def delete_student():
+    if request.method == 'OPTIONS':
+        return '', 200
     try:
         auth_header = request.headers.get('Authorization', '')
         token = auth_header.replace('Bearer ', '')
@@ -426,202 +598,29 @@ def generate_monthly_report():
         if not token:
             return jsonify({'success': False, 'error': 'No token provided'}), 401
         
-        try:
-            user_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-        except jwt.InvalidTokenError:
-            return jsonify({'success': False, 'error': 'Invalid token'}), 401
-        
+        user_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
         username = user_data['username']
-        if username not in users or users[username]['role'] != 'admin':
-            return jsonify({'success': False, 'error': 'Admin access required'}), 403
         
-        data = request.json
-        month = data.get('month')
-        year = data.get('year')
-        
-        if month and year:
-            start_date = f"{year}-{month}-01"
-            if month == '12':
-                end_date = f"{int(year)+1}-01-01"
-            else:
-                end_date = f"{year}-{int(month)+1:02d}-01"
-        else:
-            now = datetime.datetime.now()
-            start_date = now.replace(day=1).strftime('%Y-%m-%d')
-            if now.month == 12:
-                end_date = now.replace(year=now.year+1, month=1, day=1).strftime('%Y-%m-%d')
-            else:
-                end_date = now.replace(month=now.month+1, day=1).strftime('%Y-%m-%d')
-        
-        monthly_records = [r for r in attendance_records if start_date <= r['date'] < end_date]
-        
-        student_summary = {}
-        for record in monthly_records:
-            sid = record['student_id']
-            if sid not in student_summary:
-                student_summary[sid] = {
-                    'name': students.get(sid, {}).get('name', sid),
-                    'present': 0,
-                    'absent': 0,
-                    'total': 0
-                }
-            
-            if record['status'].lower() == 'present':
-                student_summary[sid]['present'] += 1
-            else:
-                student_summary[sid]['absent'] += 1
-            student_summary[sid]['total'] += 1
-        
-        # Generate HTML Report
-        html_report = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Attendance Report - {month}/{year}</title>
-            <style>
-                body {{ font-family: Arial, sans-serif; margin: 40px; }}
-                h1 {{ color: #667eea; }}
-                table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
-                th, td {{ border: 1px solid #ddd; padding: 12px; text-align: left; }}
-                th {{ background-color: #667eea; color: white; }}
-                .present {{ color: green; font-weight: bold; }}
-                .absent {{ color: red; }}
-                .summary {{ margin-top: 30px; padding: 20px; background: #f0f0f0; border-radius: 10px; }}
-            </style>
-        </head>
-        <body>
-            <h1>📊 Monthly Attendance Report</h1>
-            <p><strong>Month:</strong> {month}/{year}</p>
-            <p><strong>Generated on:</strong> {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>Student ID</th>
-                        <th>Student Name</th>
-                        <th>Present Days</th>
-                        <th>Absent Days</th>
-                        <th>Total Days</th>
-                        <th>Attendance %</th>
-                    </tr>
-                </thead>
-                <tbody>
-        """
-        
-        total_present = 0
-        total_days = 0
-        
-        for sid, data in student_summary.items():
-            percentage = (data['present'] / data['total'] * 100) if data['total'] > 0 else 0
-            total_present += data['present']
-            total_days += data['total']
-            html_report += f"""
-                <tr>
-                    <td>{sid}</td>
-                    <td>{data['name']}</td>
-                    <td class="present">{data['present']}</td>
-                    <td class="absent">{data['absent']}</td>
-                    <td>{data['total']}</td>
-                    <td>{percentage:.1f}%</td>
-                </tr>
-            """
-        
-        overall_percentage = (total_present / total_days * 100) if total_days > 0 else 0
-        
-        html_report += f"""
-                </tbody>
-            </table>
-            <div class="summary">
-                <h3>Summary</h3>
-                <p><strong>Total Students:</strong> {len(student_summary)}</p>
-                <p><strong>Total Present Days:</strong> {total_present}</p>
-                <p><strong>Total Attendance Days:</strong> {total_days}</p>
-                <p><strong>Overall Attendance:</strong> {overall_percentage:.1f}%</p>
-            </div>
-        </body>
-        </html>
-        """
-        
-        send_email(
-            EMAIL_CONFIG['admin_email'],
-            f'📊 Monthly Attendance Report - {month}/{year}',
-            html_report
-        )
-        
-        return jsonify({
-            'success': True,
-            'message': f'Monthly report sent to {EMAIL_CONFIG["admin_email"]}',
-            'summary': {
-                'total_students': len(student_summary),
-                'total_present': total_present,
-                'total_days': total_days,
-                'attendance_percentage': round(overall_percentage, 2)
-            }
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# ==================== GENERATE STUDENT CREDENTIALS ====================
-@app.route('/generate-student-credentials', methods=['POST'])
-def generate_student_credentials():
-    try:
-        auth_header = request.headers.get('Authorization', '')
-        token = auth_header.replace('Bearer ', '')
-        
-        if not token:
-            return jsonify({'success': False, 'error': 'No token provided'}), 401
-        
-        try:
-            user_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-        except jwt.InvalidTokenError:
-            return jsonify({'success': False, 'error': 'Invalid token'}), 401
-        
-        username = user_data['username']
         if username not in users or users[username]['role'] != 'admin':
             return jsonify({'success': False, 'error': 'Admin access required'}), 403
         
         data = request.json
         student_id = data.get('student_id')
-        student_email = data.get('email')
         
-        if not student_id or not student_email:
-            return jsonify({'success': False, 'error': 'student_id and email required'}), 400
+        if not student_id:
+            return jsonify({'success': False, 'error': 'student_id required'}), 400
         
-        import random
-        import string
-        temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+        if student_id in users:
+            del users[student_id]
+        if student_id in students:
+            del students[student_id]
         
-        if student_id not in users:
-            users[student_id] = {
-                'username': student_id,
-                'password': hashlib.md5(temp_password.encode()).hexdigest(),
-                'name': students.get(student_id, {}).get('name', student_id),
-                'role': 'student',
-                'email': student_email,
-                'created_at': datetime.datetime.now().isoformat()
-            }
-            
-            email_body = f"""
-            <html>
-            <body>
-            <h2 style="color: #667eea;">🎓 Welcome to Cloud Attendance System</h2>
-            <p>Your student account has been created.</p>
-            <p><strong>Username:</strong> {student_id}</p>
-            <p><strong>Password:</strong> <span style="background: #f0f0f0; padding: 5px;">{temp_password}</span></p>
-            <p><strong>Login URL:</strong> <a href="https://your-app-url.com">https://your-app-url.com</a></p>
-            <p>Please change your password after first login.</p>
-            <hr>
-            <p><small>Cloud Attendance System</small></p>
-            </body>
-            </html>
-            """
-            send_email(student_email, 'Your Attendance System Credentials', email_body)
-            
-            return jsonify({'success': True, 'message': f'Credentials sent to {student_email}'})
-        else:
-            return jsonify({'success': False, 'error': 'Student already has login credentials'}), 400
-            
+        global attendance_records, leave_applications
+        attendance_records = [r for r in attendance_records if r['student_id'] != student_id]
+        leave_applications = [l for l in leave_applications if l['student_id'] != student_id]
+        
+        return jsonify({'success': True, 'message': f'Student {student_id} deleted successfully'})
+        
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -633,41 +632,35 @@ def create_demo_data():
             'password': hashlib.md5('admin123'.encode()).hexdigest(),
             'name': 'Administrator',
             'role': 'admin',
+            'email': EMAIL_CONFIG['admin_email'],
             'created_at': datetime.datetime.now().isoformat()
         }
         print("✅ Admin user created: username='admin', password='admin123'")
     
     demo_students = [
-        {'student_id': '24021541017', 'name': 'Mohit Dahiya', 'department': 'Computer Science'},
-        {'student_id': '24021541018', 'name': 'Priya Patel', 'department': 'Computer Science'},
-        {'student_id': '24021541019', 'name': 'Amit Kumar', 'department': 'Information Technology'},
+        {'student_id': '24021541017', 'name': 'Mohit Dahiya', 'department': 'Science', 'branch': 'Computer Science', 'batch': '1st Year', 'admission_year': '2024', 'email': 'dahiyamohit764@gmail.com'},
+        {'student_id': '24021541018', 'name': 'Priya Patel', 'department': 'Science', 'branch': 'Computer Science', 'batch': '1st Year', 'admission_year': '2024', 'email': 'priya@example.com'},
+        {'student_id': '24021541019', 'name': 'Amit Kumar', 'department': 'Arts', 'branch': 'History', 'batch': '2nd Year', 'admission_year': '2023', 'email': 'amit@example.com'},
+        {'student_id': '24021541020', 'name': 'Sneha Reddy', 'department': 'Commerce', 'branch': 'Accountancy', 'batch': 'Final Year', 'admission_year': '2021', 'email': 'sneha@example.com'},
     ]
     
     for student in demo_students:
         if student['student_id'] not in students:
             students[student['student_id']] = student
             print(f"✅ Demo student added: {student['name']} ({student['student_id']})")
-    
-    today = datetime.datetime.now().strftime('%Y-%m-%d')
-    yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-    
-    demo_records = [
-        {'student_id': '24021541017', 'date': today, 'status': 'present', 'marked_at': datetime.datetime.now().isoformat()},
-        {'student_id': '24021541018', 'date': today, 'status': 'present', 'marked_at': datetime.datetime.now().isoformat()},
-        {'student_id': '24021541019', 'date': today, 'status': 'absent', 'marked_at': datetime.datetime.now().isoformat()},
-    ]
-    
-    for record in demo_records:
-        attendance_records.append(record)
-    
-    print("✅ Demo attendance records created")
 
 # ==================== MAIN ====================
 if __name__ == '__main__':
     create_demo_data()
     port = int(os.environ.get('PORT', 5000))
-    print(f"🚀 Attempting to start server on port {port}", flush=True)
-    print(f"🔧 Binding to host 0.0.0.0", flush=True)
-    print(f"📧 Admin email: {EMAIL_CONFIG['admin_email']}")
+    print("=" * 50)
+    print("🚀 Cloud Attendance System - Local Server")
+    print("=" * 50)
+    print(f"\n📧 Admin email: {EMAIL_CONFIG['admin_email']}")
     print(f"📧 Sender email: {EMAIL_CONFIG['sender_email']}")
+    print(f"\n🔑 Test Credentials:")
+    print("   Admin: username='admin', password='admin123'")
+    print("\n" + "=" * 50)
+    print(f"🔥 Server running on http://localhost:{port}")
+    print("=" * 50)
     app.run(debug=False, host='0.0.0.0', port=port, threaded=True)

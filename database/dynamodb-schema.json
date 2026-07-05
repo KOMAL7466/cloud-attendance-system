@@ -2,16 +2,100 @@
   "Tables": {
     "Users": {
       "TableName": "attendance_users",
-      "KeySchema": [{ "AttributeName": "username", "KeyType": "HASH" }],
-      "AttributeDefinitions": [{ "AttributeName": "username", "AttributeType": "S" }],
+      "KeySchema": [
+        { "AttributeName": "username", "KeyType": "HASH" }
+      ],
+      "AttributeDefinitions": [
+        { "AttributeName": "username", "AttributeType": "S" },
+        { "AttributeName": "email", "AttributeType": "S" },
+        { "AttributeName": "role", "AttributeType": "S" }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "email-index",
+          "KeySchema": [
+            { "AttributeName": "email", "KeyType": "HASH" }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        },
+        {
+          "IndexName": "role-index",
+          "KeySchema": [
+            { "AttributeName": "role", "KeyType": "HASH" }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        }
+      ],
       "BillingMode": "PAY_PER_REQUEST"
     },
+
     "Students": {
       "TableName": "attendance_students",
-      "KeySchema": [{ "AttributeName": "student_id", "KeyType": "HASH" }],
-      "AttributeDefinitions": [{ "AttributeName": "student_id", "AttributeType": "S" }],
+      "KeySchema": [
+        { "AttributeName": "student_id", "KeyType": "HASH" }
+      ],
+      "AttributeDefinitions": [
+        { "AttributeName": "student_id", "AttributeType": "S" },
+        { "AttributeName": "email", "AttributeType": "S" },
+        { "AttributeName": "department", "AttributeType": "S" },
+        { "AttributeName": "branch", "AttributeType": "S" },
+        { "AttributeName": "batch", "AttributeType": "S" },
+        { "AttributeName": "admission_year", "AttributeType": "S" }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "email-index",
+          "KeySchema": [
+            { "AttributeName": "email", "KeyType": "HASH" }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        },
+        {
+          "IndexName": "department-index",
+          "KeySchema": [
+            { "AttributeName": "department", "KeyType": "HASH" }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        },
+        {
+          "IndexName": "branch-index",
+          "KeySchema": [
+            { "AttributeName": "branch", "KeyType": "HASH" }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        },
+        {
+          "IndexName": "batch-index",
+          "KeySchema": [
+            { "AttributeName": "batch", "KeyType": "HASH" }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        },
+        {
+          "IndexName": "admission_year-index",
+          "KeySchema": [
+            { "AttributeName": "admission_year", "KeyType": "HASH" }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        }
+      ],
       "BillingMode": "PAY_PER_REQUEST"
     },
+
     "Attendance": {
       "TableName": "attendance_records",
       "KeySchema": [
@@ -20,7 +104,112 @@
       ],
       "AttributeDefinitions": [
         { "AttributeName": "student_id", "AttributeType": "S" },
-        { "AttributeName": "date", "AttributeType": "S" }
+        { "AttributeName": "date", "AttributeType": "S" },
+        { "AttributeName": "status", "AttributeType": "S" },
+        { "AttributeName": "department", "AttributeType": "S" },
+        { "AttributeName": "batch", "AttributeType": "S" },
+        { "AttributeName": "month", "AttributeType": "S" },
+        { "AttributeName": "year", "AttributeType": "S" }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "status-index",
+          "KeySchema": [
+            { "AttributeName": "status", "KeyType": "HASH" },
+            { "AttributeName": "date", "KeyType": "RANGE" }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        },
+        {
+          "IndexName": "department-index",
+          "KeySchema": [
+            { "AttributeName": "department", "KeyType": "HASH" },
+            { "AttributeName": "date", "KeyType": "RANGE" }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        },
+        {
+          "IndexName": "batch-index",
+          "KeySchema": [
+            { "AttributeName": "batch", "KeyType": "HASH" },
+            { "AttributeName": "date", "KeyType": "RANGE" }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        },
+        {
+          "IndexName": "month-index",
+          "KeySchema": [
+            { "AttributeName": "month", "KeyType": "HASH" },
+            { "AttributeName": "date", "KeyType": "RANGE" }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        },
+        {
+          "IndexName": "year-index",
+          "KeySchema": [
+            { "AttributeName": "year", "KeyType": "HASH" },
+            { "AttributeName": "date", "KeyType": "RANGE" }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        }
+      ],
+      "BillingMode": "PAY_PER_REQUEST"
+    },
+
+    "LeaveApplications": {
+      "TableName": "leave_applications",
+      "KeySchema": [
+        { "AttributeName": "student_id", "KeyType": "HASH" },
+        { "AttributeName": "date", "KeyType": "RANGE" }
+      ],
+      "AttributeDefinitions": [
+        { "AttributeName": "student_id", "AttributeType": "S" },
+        { "AttributeName": "date", "AttributeType": "S" },
+        { "AttributeName": "status", "AttributeType": "S" },
+        { "AttributeName": "department", "AttributeType": "S" },
+        { "AttributeName": "batch", "AttributeType": "S" }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "status-index",
+          "KeySchema": [
+            { "AttributeName": "status", "KeyType": "HASH" },
+            { "AttributeName": "date", "KeyType": "RANGE" }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        },
+        {
+          "IndexName": "department-index",
+          "KeySchema": [
+            { "AttributeName": "department", "KeyType": "HASH" },
+            { "AttributeName": "date", "KeyType": "RANGE" }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        },
+        {
+          "IndexName": "batch-index",
+          "KeySchema": [
+            { "AttributeName": "batch", "KeyType": "HASH" },
+            { "AttributeName": "date", "KeyType": "RANGE" }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        }
       ],
       "BillingMode": "PAY_PER_REQUEST"
     }

@@ -17,87 +17,128 @@
     
     <div class="dashboard-container">
         <div class="sidebar">
-            <button onclick="showAdminSection('overview')" class="sidebar-btn">📊 Overview</button>
+            <button onclick="showAdminSection('overview')" class="sidebar-btn active">📊 Overview</button>
             <button onclick="showAdminSection('students')" class="sidebar-btn">👨‍🎓 Manage Students</button>
-            <button onclick="showAdminSection('reports')" class="sidebar-btn">📄 Generate Reports</button>
+            <button onclick="showAdminSection('credentials')" class="sidebar-btn">🔑 Generate Credentials</button>
+            <button onclick="showAdminSection('attendance')" class="sidebar-btn">📋 View Attendance</button>
+            <button onclick="showAdminSection('reports')" class="sidebar-btn">📄 Reports</button>
+            <button onclick="showAdminSection('leave')" class="sidebar-btn">📝 Leave Applications</button>
             <button onclick="showAdminSection('settings')" class="sidebar-btn">⚙️ Settings</button>
         </div>
         
         <div class="main-content">
-            <!-- Overview Section -->
+            
+            <!-- ========== OVERVIEW ========== -->
             <div id="overviewSection" class="section">
-                <h2>System Overview</h2>
-                <div class="stats-cards" id="statsCards"></div>
-                <div class="card">
-                    <h3>Daily Attendance Trend</h3>
-                    <div id="attendanceChart" class="chart-container"></div>
-                </div>
-                <div class="card">
-                    <h3>Student Attendance Percentage</h3>
-                    <div id="studentStats" class="records-table"></div>
+                <h2>📊 System Overview</h2>
+                <div class="stats-cards" id="statsCards">
+                    <div class="stat-card"><h3 id="totalStudents">0</h3><p>Total Students</p></div>
+                    <div class="stat-card"><h3 id="totalUsers">0</h3><p>Total Users</p></div>
+                    <div class="stat-card"><h3 id="totalPresent">0</h3><p>Total Present</p></div>
+                    <div class="stat-card"><h3 id="totalLeave">0</h3><p>Total Leave</p></div>
+                    <div class="stat-card"><h3 id="totalAbsent">0</h3><p>Total Absent</p></div>
+                    <div class="stat-card"><h3 id="attendancePercentage">0%</h3><p>Overall Attendance</p></div>
                 </div>
             </div>
             
-            <!-- Manage Students Section -->
+            <!-- ========== MANAGE STUDENTS ========== -->
             <div id="studentsSection" class="section" style="display: none;">
-                <h2>Manage Students</h2>
+                <h2>👨‍🎓 Manage Students</h2>
                 <div class="card">
-                    <h3>Add New Student</h3>
-                    <div class="form-row">
-                        <div class="input-group">
-                            <label>Student ID</label>
-                            <input type="text" id="newStudentId" placeholder="e.g., 23021541027">
-                        </div>
-                        <div class="input-group">
-                            <label>Student Name</label>
-                            <input type="text" id="newStudentName" placeholder="Full Name">
-                        </div>
-                        <div class="input-group">
-                            <label>Department</label>
-                            <input type="text" id="newStudentDept" placeholder="Department">
-                        </div>
-                        <button onclick="addStudent()" class="primary-btn">Add Student</button>
+                    <h3>➕ Add New Student</h3>
+                    <div class="form-grid">
+                        <div class="input-group"><label>Student ID *</label><input type="text" id="newStudentId" placeholder="e.g., 24021541027"></div>
+                        <div class="input-group"><label>Full Name *</label><input type="text" id="newStudentName" placeholder="Full Name"></div>
+                        <div class="input-group"><label>Email</label><input type="email" id="newStudentEmail" placeholder="student@example.com"></div>
+                        <div class="input-group"><label>Department</label><select id="newStudentDept"><option value="Science">Science</option><option value="Arts">Arts</option><option value="Commerce">Commerce</option><option value="Engineering">Engineering</option><option value="Medical">Medical</option><option value="Other">Other</option></select></div>
+                        <div class="input-group"><label>Branch</label><input type="text" id="newStudentBranch" placeholder="e.g., Computer Science"></div>
+                        <div class="input-group"><label>Batch/Year</label><select id="newStudentBatch"><option value="1st Year">1st Year</option><option value="2nd Year">2nd Year</option><option value="3rd Year">3rd Year</option><option value="4th Year">4th Year</option><option value="Final Year">Final Year</option></select></div>
+                        <div class="input-group"><label>Admission Year</label><input type="number" id="newStudentYear" placeholder="2024" value="2024"></div>
+                        <div class="input-group" style="display: flex; align-items: flex-end;"><button onclick="addStudent()" class="primary-btn" style="width: 100%;">➕ Add Student</button></div>
                     </div>
                 </div>
+                
                 <div class="card">
-                    <h3>Student List</h3>
+                    <h3>📋 Student List</h3>
                     <div id="studentList" class="records-table"></div>
                 </div>
             </div>
             
-            <!-- Reports Section -->
-            <div id="reportsSection" class="section" style="display: none;">
-                <h2>Generate Reports</h2>
+            <!-- ========== GENERATE CREDENTIALS ========== -->
+            <div id="credentialsSection" class="section" style="display: none;">
+                <h2>🔑 Generate Student Credentials</h2>
                 <div class="card">
-                    <div class="input-group">
-                        <label>Report Type</label>
-                        <select id="reportType">
-                            <option value="daily">Daily Report</option>
-                            <option value="monthly">Monthly Report</option>
-                        </select>
+                    <h3>📧 Send Login Credentials to Student</h3>
+                    <div class="form-grid">
+                        <div class="input-group"><label>Student ID *</label><input type="text" id="credStudentId" placeholder="e.g., 24021541027"></div>
+                        <div class="input-group"><label>Student Name *</label><input type="text" id="credStudentName" placeholder="Full Name"></div>
+                        <div class="input-group"><label>Student Email *</label><input type="email" id="credStudentEmail" placeholder="student@example.com"></div>
+                        <div class="input-group"><label>Department</label><select id="credStudentDept"><option value="Science">Science</option><option value="Arts">Arts</option><option value="Commerce">Commerce</option><option value="Engineering">Engineering</option><option value="Medical">Medical</option><option value="Other">Other</option></select></div>
+                        <div class="input-group"><label>Branch</label><input type="text" id="credStudentBranch" placeholder="e.g., Computer Science"></div>
+                        <div class="input-group"><label>Batch/Year</label><select id="credStudentBatch"><option value="1st Year">1st Year</option><option value="2nd Year">2nd Year</option><option value="3rd Year">3rd Year</option><option value="4th Year">4th Year</option><option value="Final Year">Final Year</option></select></div>
+                        <div class="input-group"><label>Admission Year</label><input type="number" id="credStudentYear" placeholder="2024" value="2024"></div>
+                        <div class="input-group" style="display: flex; align-items: flex-end;"><button onclick="generateStudentCredentials()" class="primary-btn" style="width: 100%;">📧 Generate & Send</button></div>
                     </div>
-                    <div class="input-group">
-                        <label>Date</label>
-                        <input type="date" id="reportDate">
+                    <div id="credentialResult" class="message" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+            
+            <!-- ========== VIEW ATTENDANCE ========== -->
+            <div id="attendanceSection" class="section" style="display: none;">
+                <h2>📋 View Attendance</h2>
+                <div class="card">
+                    <h3>🔍 Filter Attendance</h3>
+                    <div class="filter-bar">
+                        <div class="input-group"><label>Student ID</label><input type="text" id="attendanceStudentId" placeholder="Enter Student ID"></div>
+                        <div class="input-group"><label>Department</label><select id="attendanceDepartment"><option value="">All</option><option value="Science">Science</option><option value="Arts">Arts</option><option value="Commerce">Commerce</option><option value="Engineering">Engineering</option><option value="Medical">Medical</option></select></div>
+                        <div class="input-group"><label>Batch</label><select id="attendanceBatch"><option value="">All</option><option value="1st Year">1st Year</option><option value="2nd Year">2nd Year</option><option value="3rd Year">3rd Year</option><option value="4th Year">4th Year</option><option value="Final Year">Final Year</option></select></div>
+                        <div class="input-group"><label>Status</label><select id="attendanceStatus"><option value="">All</option><option value="present">Present</option><option value="absent">Absent</option><option value="leave">Leave</option></select></div>
+                        <div class="input-group"><label>Start Date</label><input type="date" id="attendanceStartDate"></div>
+                        <div class="input-group"><label>End Date</label><input type="date" id="attendanceEndDate"></div>
+                        <div class="input-group" style="display: flex; align-items: flex-end;"><button onclick="viewAdminAttendance()" class="primary-btn" style="width: 100%;">🔍 Search</button></div>
                     </div>
-                    <button onclick="generateReport()" class="primary-btn">Generate Report</button>
+                </div>
+                <div class="card"><h3>📊 Attendance Records</h3><div id="attendanceRecords" class="records-table"></div></div>
+            </div>
+            
+            <!-- ========== REPORTS ========== -->
+            <div id="reportsSection" class="section" style="display: none;">
+                <h2>📄 Generate Reports</h2>
+                <div class="card">
+                    <h3>📊 Generate Report</h3>
+                    <div class="form-grid">
+                        <div class="input-group"><label>Report Type</label><select id="reportType"><option value="daily">Daily Report</option><option value="monthly">Monthly Report</option></select></div>
+                        <div class="input-group"><label>Date</label><input type="date" id="reportDate"></div>
+                        <div class="input-group"><label>Department (Optional)</label><select id="reportDepartment"><option value="">All Departments</option><option value="Science">Science</option><option value="Arts">Arts</option><option value="Commerce">Commerce</option><option value="Engineering">Engineering</option><option value="Medical">Medical</option></select></div>
+                        <div class="input-group"><label>Batch (Optional)</label><select id="reportBatch"><option value="">All Batches</option><option value="1st Year">1st Year</option><option value="2nd Year">2nd Year</option><option value="3rd Year">3rd Year</option><option value="4th Year">4th Year</option><option value="Final Year">Final Year</option></select></div>
+                        <div class="input-group" style="display: flex; align-items: flex-end;"><button onclick="generateReport()" class="primary-btn" style="width: 100%;">📥 Generate & Download</button></div>
+                    </div>
                     <div id="reportResult" class="message"></div>
                 </div>
             </div>
             
-            <!-- Settings Section -->
+            <!-- ========== LEAVE APPLICATIONS ========== -->
+            <div id="leaveSection" class="section" style="display: none;">
+                <h2>📝 Leave Applications</h2>
+                <div class="card"><h3>📋 Pending Leave Requests</h3><div id="leaveApplications" class="records-table"></div></div>
+            </div>
+            
+            <!-- ========== SETTINGS ========== -->
             <div id="settingsSection" class="section" style="display: none;">
-                <h2>System Settings</h2>
+                <h2>⚙️ System Settings</h2>
                 <div class="card">
-                    <h3>API Configuration</h3>
-                    <div class="input-group">
-                        <label>API Endpoint</label>
-                        <input type="text" id="apiEndpoint" readonly>
-                    </div>
+                    <h3>🔗 API Configuration</h3>
+                    <div class="input-group"><label>API Endpoint</label><input type="text" id="apiEndpoint" readonly></div>
                     <button onclick="testConnection()" class="secondary-btn">Test Connection</button>
                     <div id="connectionStatus"></div>
                 </div>
+                <div class="card">
+                    <h3>📧 Email Configuration</h3>
+                    <p><strong>Admin Email:</strong> dahiyamohit764@gmail.com</p>
+                    <p><strong>Sender Email:</strong> varshadahiya708@gmail.com</p>
+                </div>
             </div>
+            
         </div>
     </div>
     
