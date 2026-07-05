@@ -5,23 +5,21 @@ from datetime import datetime
 import csv
 from io import StringIO, BytesIO
 import base64
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders
+from email_service import send_email, SENDER_EMAIL, ADMIN_EMAIL
 
 dynamodb = boto3.resource('dynamodb')
 s3 = boto3.client('s3')
-ses = boto3.client('ses', region_name='ap-south-1')
 
-attendance_table = dynamodb.Table(os.environ['ATTENDANCE_TABLE'])
-students_table = dynamodb.Table(os.environ['STUDENTS_TABLE'])
-users_table = dynamodb.Table(os.environ.get('USERS_TABLE', 'attendance_users'))
+ATTENDANCE_TABLE = 'attendance_records'
+STUDENTS_TABLE = 'attendance_students'
+USERS_TABLE = 'attendance_users'
+REPORT_BUCKET = 'attendance-reports'
 
-BUCKET_NAME = os.environ['REPORT_BUCKET']
-SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'dahiyamohit764@gmail.com')
-ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'dahiyamohit764@gmail.com')
+attendance_table = dynamodb.Table(ATTENDANCE_TABLE)
+students_table = dynamodb.Table(STUDENTS_TABLE)
+users_table = dynamodb.Table(USERS_TABLE)
+
+BUCKET_NAME = REPORT_BUCKET
 
 # Admin Signature (can be stored in S3 or as base64 string)
 ADMIN_SIGNATURE = """
@@ -34,53 +32,6 @@ ADMIN_SIGNATURE = """
     <p style="color: #999; font-size: 12px;">Date: {date}</p>
 </div>
 """
-
-def send_email(to_email, subject, body, attachment=None, filename=None):
-    """Send email using AWS SES with optional attachment"""
-    try:
-        if attachment:
-            # Create multipart message
-            msg = MIMEMultipart()
-            msg['Subject'] = subject
-            msg['From'] = SENDER_EMAIL
-            msg['To'] = to_email
-            
-            # Attach body
-            msg.attach(MIMEText(body, 'html'))
-            
-            # Attach file
-            if attachment:
-                part = MIMEBase('application', 'octet-stream')
-                part.set_payload(attachment)
-                encoders.encode_base64(part)
-                part.add_header(
-                    'Content-Disposition',
-                    f'attachment; filename={filename}'
-                )
-                msg.attach(part)
-            
-            # Send email using SES
-            response = ses.send_raw_email(
-                Source=SENDER_EMAIL,
-                Destinations=[to_email],
-                RawMessage={'Data': msg.as_string()}
-            )
-        else:
-            # Send simple email
-            response = ses.send_email(
-                Source=SENDER_EMAIL,
-                Destination={'ToAddresses': [to_email]},
-                Message={
-                    'Subject': {'Data': subject},
-                    'Body': {'Html': {'Data': body}}
-                }
-            )
-        
-        print(f"✅ Email sent to {to_email}")
-        return True
-    except Exception as e:
-        print(f"❌ Email error: {e}")
-        return False
 
 def generate_pdf_report(records, students, report_type, date, admin_name='Mohit Dahiya'):
     """Generate PDF report as HTML (will be converted to PDF)"""

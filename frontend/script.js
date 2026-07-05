@@ -1,5 +1,6 @@
 // API Configuration
-const API_BASE_URL = 'https://cloud-attendance-system-ab69.onrender.com'; // Change to live URL when deploying
+// const API_BASE_URL = 'https://cloud-attendance-system-ab69.onrender.com'; // Change to live URL when deploying
+const API_BASE_URL = 'http://localhost:5000';
 
 // Store user session
 let currentUser = null;
@@ -654,7 +655,10 @@ async function generateStudentCredentials() {
         const data = await response.json();
         
         if (data.success) {
-            showMessage('credentialResult', `✅ ${data.message}`, 'success');
+            const msg = data.email_sent === false
+                ? `⚠️ ${data.message}`
+                : `✅ ${data.message}`;
+            showMessage('credentialResult', msg, data.email_sent === false ? 'error' : 'success');
             document.getElementById('credStudentId').value = '';
             document.getElementById('credStudentName').value = '';
             document.getElementById('credStudentEmail').value = '';

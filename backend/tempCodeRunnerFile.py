@@ -13,8 +13,9 @@ from datetime import datetime
 # Add parent directory to path if needed
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# Import the Flask app
+# Import the Flask app (email config loaded from .env via email_service)
 from local_app import app, create_demo_data
+from email_service import SENDER_EMAIL, ADMIN_EMAIL
 
 def check_port_available(port):
     """Check if a port is available"""
@@ -81,8 +82,8 @@ def run_server():
     try:
         # Get port from environment or use default
         port = int(os.environ.get('PORT', 5000))
-        host = os.environ.get('HOST', '0.0.0.0')
-        debug = os.environ.get('DEBUG', 'False').lower() == 'true'
+        host = '0.0.0.0'
+        debug = False
         
         # Check if port is available
         if not check_port_available(port):
@@ -91,12 +92,7 @@ def run_server():
             print(f"🔄 Using available port: {new_port}")
             port = new_port
         
-        # Get email config
-        admin_email = os.environ.get('ADMIN_EMAIL', 'dahiyamohit764@gmail.com')
-        sender_email = os.environ.get('SENDER_EMAIL', 'dahiyamohit764@gmail.com')
-        
-        # Print banner
-        print_banner(port, admin_email, sender_email)
+        print_banner(port, ADMIN_EMAIL, SENDER_EMAIL)
         
         # Create demo data
         print("📋 Creating demo data...")

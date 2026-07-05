@@ -8,11 +8,12 @@ import uuid
 import random
 import string
 from datetime import datetime, timedelta
+from email_service import send_email
 
-# Environment Variables
-USER_TABLE = os.environ.get('USER_TABLE', 'attendance_users')
-STUDENTS_TABLE = os.environ.get('STUDENTS_TABLE', 'attendance_students')
-SECRET_KEY = os.environ.get('JWT_SECRET', 'your-secret-key')
+# Hardcoded config
+USER_TABLE = 'attendance_users'
+STUDENTS_TABLE = 'attendance_students'
+SECRET_KEY = 'your-secret-key-here'
 
 dynamodb = boto3.resource('dynamodb')
 users_table = dynamodb.Table(USER_TABLE)
@@ -38,15 +39,6 @@ def hash_password(password, salt):
         password.encode('utf-8'),
         hashlib.sha256
     ).hexdigest()
-
-def send_email(to_email, subject, body):
-    """Send email using SES or SMTP (placeholder for Lambda)"""
-    # In production, use AWS SES
-    # For now, return True (will be implemented with SES)
-    print(f"📧 Would send email to: {to_email}")
-    print(f"📧 Subject: {subject}")
-    print(f"📧 Body: {body[:200]}...")
-    return True
 
 def lambda_handler(event, context):
     try:

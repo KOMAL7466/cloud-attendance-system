@@ -4,40 +4,19 @@ import os
 from datetime import datetime
 import hashlib
 import hmac
+from email_service import send_email, SENDER_EMAIL, ADMIN_EMAIL
 
-# Environment Variables
-ATTENDANCE_TABLE = os.environ.get('ATTENDANCE_TABLE', 'attendance_records')
-STUDENTS_TABLE = os.environ.get('STUDENTS_TABLE', 'attendance_students')
-USERS_TABLE = os.environ.get('USERS_TABLE', 'attendance_users')
-LEAVE_TABLE = os.environ.get('LEAVE_TABLE', 'leave_applications')
-SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'dahiyamohit764@gmail.com')
-ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'dahiyamohit764@gmail.com')
+# Hardcoded config
+ATTENDANCE_TABLE = 'attendance_records'
+STUDENTS_TABLE = 'attendance_students'
+USERS_TABLE = 'attendance_users'
+LEAVE_TABLE = 'leave_applications'
 
 dynamodb = boto3.resource('dynamodb')
 attendance_table = dynamodb.Table(ATTENDANCE_TABLE)
 students_table = dynamodb.Table(STUDENTS_TABLE)
 users_table = dynamodb.Table(USERS_TABLE)
 leave_table = dynamodb.Table(LEAVE_TABLE)
-
-# SES client for email
-ses = boto3.client('ses', region_name='ap-south-1')
-
-def send_email(to_email, subject, body):
-    """Send email using AWS SES"""
-    try:
-        response = ses.send_email(
-            Source=SENDER_EMAIL,
-            Destination={'ToAddresses': [to_email]},
-            Message={
-                'Subject': {'Data': subject},
-                'Body': {'Html': {'Data': body}}
-            }
-        )
-        print(f"✅ Email sent to {to_email}")
-        return True
-    except Exception as e:
-        print(f"❌ Email error: {e}")
-        return False
 
 def lambda_handler(event, context):
     try:

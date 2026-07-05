@@ -4,10 +4,10 @@ import os
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Key, Attr
 
-# Environment Variables
-ATTENDANCE_TABLE = os.environ.get('ATTENDANCE_TABLE', 'attendance_records')
-STUDENTS_TABLE = os.environ.get('STUDENTS_TABLE', 'attendance_students')
-USERS_TABLE = os.environ.get('USERS_TABLE', 'attendance_users')
+# Hardcoded config
+ATTENDANCE_TABLE = 'attendance_records'
+STUDENTS_TABLE = 'attendance_students'
+USERS_TABLE = 'attendance_users'
 
 dynamodb = boto3.resource('dynamodb')
 attendance_table = dynamodb.Table(ATTENDANCE_TABLE)

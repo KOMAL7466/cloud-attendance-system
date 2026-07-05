@@ -4,11 +4,17 @@ import jwt
 import datetime
 import hashlib
 import os
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import random
 import string
+import sys
+
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+
+from email_service import send_email, SENDER_EMAIL, ADMIN_EMAIL, BREVO_API_KEY
 
 app = Flask(__name__)
 
@@ -22,15 +28,6 @@ CORS(app, resources={
     }
 })
 
-# ==================== ✅ UPDATED EMAIL CONFIGURATION ====================
-EMAIL_CONFIG = {
-    'smtp_server': 'smtp.gmail.com',
-    'smtp_port': 587,
-    'sender_email': 'dahiyamohit764@gmail.com',  # ✅ Changed to Mohit's email
-    'sender_password': 'lmpa vzky dxmn gphs',  # ✅ REPLACE with Mohit's app password
-    'admin_email': 'dahiyamohit764@gmail.com'     # ✅ Admin email (same)
-}
-
 # In-memory storage
 users = {}
 students = {}
@@ -39,40 +36,32 @@ leave_applications = []
 
 SECRET_KEY = "your-secret-key-here"
 
-# ==================== ✅ UPDATED EMAIL FUNCTION WITH DEBUG LOGS ====================
-def send_email(to_email, subject, body):
-    try:
-        print(f"📧 Attempting to send email to: {to_email}", flush=True)
-        
-        msg = MIMEMultipart()
-        msg['From'] = EMAIL_CONFIG['sender_email']
-        msg['To'] = to_email
-        msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'html'))
-        
-        print(f"🔐 Connecting to SMTP server...", flush=True)
-        server = smtplib.SMTP(EMAIL_CONFIG['smtp_server'], EMAIL_CONFIG['smtp_port'])
-        server.starttls()
-        
-        print(f"🔑 Logging in as: {EMAIL_CONFIG['sender_email']}", flush=True)
-        server.login(EMAIL_CONFIG['sender_email'], EMAIL_CONFIG['sender_password'])
-        
-        print(f"📤 Sending email...", flush=True)
-        server.send_message(msg)
-        server.quit()
-        
-        print(f"✅ Email sent successfully to {to_email}", flush=True)
-        return True
-    except Exception as e:
-        print(f"❌ EMAIL ERROR: {e}", flush=True)
-        import traceback
-        traceback.print_exc()
-        return False
-
 # ==================== HEALTH CHECK ====================
 @app.route('/health', methods=['GET'])
 def health_check():
-    return jsonify({'status': 'healthy', 'timestamp': datetime.datetime.now().isoformat()})
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.datetime.now().isoformat(),
+        'email_provider': 'brevo',
+        'sender_email': SENDER_EMAIL,
+        'brevo_configured': bool(BREVO_API_KEY),
+    })
+
+# ==================== TEST EMAIL ====================
+@app.route('/test-email', methods=['GET', 'POST'])
+def test_email():
+    """Send a test email via Brevo. Open in browser or: curl http://localhost:5000/test-email"""
+    to = request.args.get('to') or ADMIN_EMAIL
+    subject = 'Hello World — Cloud Attendance Test'
+    body = '<p>Congrats on sending your <strong>first email</strong> from Cloud Attendance!</p>'
+
+    sent = send_email(to, subject, body)
+    return jsonify({
+        'success': sent,
+        'from': SENDER_EMAIL,
+        'to': to,
+        'message': f'Test email sent to {to}' if sent else f'Failed to send test email to {to} — check server logs',
+    }), 200 if sent else 500
 
 # ==================== AUTH ENDPOINT ====================
 @app.route('/auth', methods=['POST', 'OPTIONS'])
@@ -224,11 +213,16 @@ def generate_student_credentials():
         </body>
         </html>
         """
-        send_email(email, '🎓 Your Attendance System Credentials', email_body)
+        email_sent = send_email(email, '🎓 Your Attendance System Credentials', email_body)
         
         return jsonify({
             'success': True,
-            'message': f'{message} and credentials sent to {email}',
+            'email_sent': email_sent,
+            'message': (
+                f'{message} and credentials sent to {email}'
+                if email_sent else
+                f'{message} but failed to send email to {email} — check Render logs and email env vars'
+            ),
             'student': {'student_id': student_id, 'name': name, 'email': email}
         })
         
@@ -341,11 +335,12 @@ def mark_attendance():
         </body>
         </html>
         """
-        send_email(EMAIL_CONFIG['admin_email'], f'📋 Attendance Update - {student_name}', email_body)
+        email_sent = send_email(ADMIN_EMAIL, f'📋 Attendance Update - {student_name}', email_body)
         
         return jsonify({
             'success': True,
-            'message': message,
+            'email_sent': email_sent,
+            'message': message if email_sent else f'{message} (admin email notification failed)',
             'attendance': attendance_entry,
             'leave_applied': leave_applied
         })
@@ -642,7 +637,7 @@ def create_demo_data():
             'password': hashlib.md5('admin123'.encode()).hexdigest(),
             'name': 'Administrator',
             'role': 'admin',
-            'email': EMAIL_CONFIG['admin_email'],
+            'email': ADMIN_EMAIL,
             'created_at': datetime.datetime.now().isoformat()
         }
         print("✅ Admin user created: username='admin', password='admin123'")
@@ -662,12 +657,12 @@ def create_demo_data():
 # ==================== MAIN ====================
 if __name__ == '__main__':
     create_demo_data()
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 5000))  # Render sets PORT automatically
     print("=" * 50)
     print("🚀 Cloud Attendance System - Local Server")
     print("=" * 50)
-    print(f"\n📧 Admin email: {EMAIL_CONFIG['admin_email']}")
-    print(f"📧 Sender email: {EMAIL_CONFIG['sender_email']}")
+    print(f"\n📧 Admin email: {ADMIN_EMAIL}")
+    print(f"📧 Sender email: {SENDER_EMAIL}")
     print(f"\n🔑 Test Credentials:")
     print("   Admin: username='admin', password='admin123'")
     print("\n" + "=" * 50)
