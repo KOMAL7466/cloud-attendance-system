@@ -22,13 +22,13 @@ CORS(app, resources={
     }
 })
 
-# ==================== EMAIL CONFIGURATION ====================
+# ==================== ✅ UPDATED EMAIL CONFIGURATION ====================
 EMAIL_CONFIG = {
     'smtp_server': 'smtp.gmail.com',
     'smtp_port': 587,
-    'sender_email': 'varshadahiya708@gmail.com',
-    'sender_password': 'vowh aegj ohec mptm',  # Change this
-    'admin_email': 'dahiyamohit764@gmail.com'
+    'sender_email': 'dahiyamohit764@gmail.com',  # ✅ Changed to Mohit's email
+    'sender_password': 'your_new_app_password',  # ✅ REPLACE with Mohit's app password
+    'admin_email': 'dahiyamohit764@gmail.com'     # ✅ Admin email (same)
 }
 
 # In-memory storage
@@ -39,24 +39,34 @@ leave_applications = []
 
 SECRET_KEY = "your-secret-key-here"
 
-# ==================== EMAIL FUNCTION ====================
+# ==================== ✅ UPDATED EMAIL FUNCTION WITH DEBUG LOGS ====================
 def send_email(to_email, subject, body):
     try:
+        print(f"📧 Attempting to send email to: {to_email}", flush=True)
+        
         msg = MIMEMultipart()
         msg['From'] = EMAIL_CONFIG['sender_email']
         msg['To'] = to_email
         msg['Subject'] = subject
         msg.attach(MIMEText(body, 'html'))
         
+        print(f"🔐 Connecting to SMTP server...", flush=True)
         server = smtplib.SMTP(EMAIL_CONFIG['smtp_server'], EMAIL_CONFIG['smtp_port'])
         server.starttls()
+        
+        print(f"🔑 Logging in as: {EMAIL_CONFIG['sender_email']}", flush=True)
         server.login(EMAIL_CONFIG['sender_email'], EMAIL_CONFIG['sender_password'])
+        
+        print(f"📤 Sending email...", flush=True)
         server.send_message(msg)
         server.quit()
-        print(f"✅ Email sent to {to_email}")
+        
+        print(f"✅ Email sent successfully to {to_email}", flush=True)
         return True
     except Exception as e:
-        print(f"❌ Email error: {e}")
+        print(f"❌ EMAIL ERROR: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
         return False
 
 # ==================== HEALTH CHECK ====================
