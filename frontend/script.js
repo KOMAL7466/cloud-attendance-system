@@ -1,6 +1,5 @@
-// API Configuration
-// const API_BASE_URL = 'https://cloud-attendance-system-ab69.onrender.com'; // Change to live URL when deploying
-const API_BASE_URL = 'http://localhost:5000';
+// API Configuration — production backend on Render
+const API_BASE_URL = 'https://cloud-attendance-system-ab69.onrender.com';
 
 // Store user session
 let currentUser = null;
